@@ -1,0 +1,6 @@
+__pycache__
+.venv
+old
+index copy.html
+.flaskenv
+.env
