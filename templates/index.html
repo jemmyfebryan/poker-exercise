@@ -135,7 +135,7 @@
     {% endif %}
 
     <h2>Enter Your Predicted Probabilities</h2>
-    <form method="POST">
+    <form method="POST" action="/result">
         <!-- Sending the poker data to the server -->
         <!-- <input type="hidden" id="dark_mode" name="dark_mode" value="{{ 'true' if poker_data.dark_mode else 'false' }}"> -->
         <input type="hidden" name="player_hand" value="{{ poker_data.player_hand }}">
@@ -151,8 +151,27 @@
     {% if predicted_win %}
         <h2>Results</h2>
         <p><strong>Actual Win Probability:</strong> {{ poker_data.win_prob }}</p>
-        <p><strong>Your Predictions:</strong>{{ predicted_win }}</p>
-        <p><strong>Errors:</strong>{{ win_error }}</p>
+        <p><strong>Your Predictions: </strong>{{ predicted_win }}</p>
+        <p><strong>Errors: </strong>{{ win_error }}</p>
+        <p>
+            <strong>Grade: </strong>
+            <span 
+                style="
+                    font-size: 1.5em; 
+                    font-weight: bold; 
+                    color: 
+                    {% if prediction_grade == 'S' %} gold 
+                    {% elif prediction_grade == 'A' %} green 
+                    {% elif prediction_grade == 'B' %} blue 
+                    {% elif prediction_grade == 'C' %} orange 
+                    {% elif prediction_grade == 'D' %} red 
+                    {% else %} gray 
+                    {% endif %};
+                "
+            >
+                {{ prediction_grade }}
+            </span>
+        </p>
     {% endif %}
 
     <!-- Button to trigger a new random game without refreshing -->
@@ -188,37 +207,8 @@
         }
     </script>
     <script>
-        document.getElementById('new-game-button').addEventListener('click', () => {
-            fetch('/new_game', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(pokerData => {
-                // Update the DOM with the new game data
-                document.querySelector('.card-container').innerHTML = pokerData.player_hand_images
-                    .map(image => `<img src="/static/cards/${image}" alt="Card" class="card">`)
-                    .join('');
-    
-                const communityContainer = document.querySelector('.card-container + .card-container');
-                if (pokerData.community_cards_images) {
-                    communityContainer.innerHTML = pokerData.community_cards_images
-                        .map(image => `<img src="/static/cards/${image}" alt="Card" class="card">`)
-                        .join('');
-                } else {
-                    communityContainer.innerHTML = '';
-                }
-    
-                // Update other game details
-                document.querySelector('p strong').textContent = pokerData.num_opponents;
-                // Clear any previously displayed results or errors
-                document.getElementById('errors').textContent = '';
-            })
-            .catch(error => {
-                console.error('Error starting new game:', error);
-            });
+        document.getElementById('new-game-button').addEventListener('click', function() {
+            window.location.href = '/';
         });
     </script>
 </body>
