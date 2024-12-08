@@ -43,6 +43,11 @@
         .error {
             color: red;
         }
+
+        .div {
+            background-color: #fff;
+        }
+
         form {
             margin-top: 30px;
             background-color: #fff;
@@ -75,6 +80,10 @@
             background-color: #444;
             color: #f4f4f9;
         }
+        body.dark-mode div {
+            background-color: #444;
+            color: #f4f4f9;
+        }
         body.dark-mode .error {
             color: #ff6666;
         }
@@ -91,12 +100,14 @@
             right: 20px;
         }
     </style>
-</head>
-<body>
-    <h1>Poker Simulation</h1>
 
+    {% set dark_mode = true %}
+</head>
+<body class="{{ 'dark-mode' if dark_mode else '' }}">
+    <h1>Poker Simulation</h1>
+    
     <!-- Dark Mode Toggle Button -->
-    <button class="toggle-button" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    <!-- <button class="toggle-button" onclick="toggleDarkMode()">Toggle Dark Mode</button> -->
 
     {% if poker_data %}
         <h2>Game Details</h2>
@@ -126,6 +137,7 @@
     <h2>Enter Your Predicted Probabilities</h2>
     <form method="POST">
         <!-- Sending the poker data to the server -->
+        <!-- <input type="hidden" id="dark_mode" name="dark_mode" value="{{ 'true' if poker_data.dark_mode else 'false' }}"> -->
         <input type="hidden" name="player_hand" value="{{ poker_data.player_hand }}">
         <input type="hidden" name="community_cards" value="{{ poker_data.community_cards }}">
         <input type="hidden" name="num_opponents" value="{{ poker_data.num_opponents }}">
@@ -144,15 +156,70 @@
     {% endif %}
 
     <!-- Button to trigger a new random game without refreshing -->
+    <div>
+        <button id="new-game-button" class="button" style="margin-bottom: 20px;">Start New Game</button>
+    </div>
     <!-- <button onclick="location.reload(true)" class="button">Start New Game</button> -->
 
     <div id="errors"></div>
 
-    <!-- <script>
+    <script>
         // Toggle Dark Mode
         function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            const isDarkMode = body.classList.contains('dark-mode');
+
+            // Send the updated state to the server
+            fetch('/darkmode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ dark_mode: isDarkMode }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Dark mode updated:', data.dark_mode);
+            })
+            .catch(error => {
+                console.error('Error updating dark mode:', error);
+            });
         }
-    </script> -->
+    </script>
+    <script>
+        document.getElementById('new-game-button').addEventListener('click', () => {
+            fetch('/new_game', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(pokerData => {
+                // Update the DOM with the new game data
+                document.querySelector('.card-container').innerHTML = pokerData.player_hand_images
+                    .map(image => `<img src="/static/cards/${image}" alt="Card" class="card">`)
+                    .join('');
+    
+                const communityContainer = document.querySelector('.card-container + .card-container');
+                if (pokerData.community_cards_images) {
+                    communityContainer.innerHTML = pokerData.community_cards_images
+                        .map(image => `<img src="/static/cards/${image}" alt="Card" class="card">`)
+                        .join('');
+                } else {
+                    communityContainer.innerHTML = '';
+                }
+    
+                // Update other game details
+                document.querySelector('p strong').textContent = pokerData.num_opponents;
+                // Clear any previously displayed results or errors
+                document.getElementById('errors').textContent = '';
+            })
+            .catch(error => {
+                console.error('Error starting new game:', error);
+            });
+        });
+    </script>
 </body>
 </html>
